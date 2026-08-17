@@ -11,3 +11,6 @@ Format: `- term | scenario | explanation used | date`
 - scopes | github token setup | which parts it's allowed to touch — like picking rooms, not the whole house | 2026-08-17
 - repo | github token setup | a project's folder, stored online | 2026-08-17
 - .env | github token setup | a hidden file that keeps secrets out of your actual code | 2026-08-17
+- scope | github token setup (ikea card design test render) | which parts it's allowed to touch — like picking rooms, not the whole house | 2026-08-17
+- token | github token setup (ikea card design test render) | like a password, but for this service instead of your login | 2026-08-17
+- .env | github token setup (ikea card design test render) | a hidden file that keeps secrets out of your actual code | 2026-08-17

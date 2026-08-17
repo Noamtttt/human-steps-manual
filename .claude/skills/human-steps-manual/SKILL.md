@@ -67,25 +67,37 @@ reading, maximize action:
 
 ## Panel grammar (reuse across every manual)
 
-Consistent visual language so different scenarios (auth vs API key vs paywall) still
-feel like the same "manual" — only icons/copy change. Keep it calm and legible first,
-charming second — the mascot and copy carry the personality, the card chrome should
-not fight for attention.
+**IKEA-instruction-booklet parody.** Cards are black line-art on a plain surface,
+with exactly **one accent color** (the mascot's own amber fill, `#F4C177` — no new
+color introduced) used sparingly for arrows/highlights. No per-step background
+color, no warm multi-tone cards — color is reserved for the accent arrow and the
+mascot art only. Consistent visual language so different scenarios (auth vs API key
+vs paywall) still feel like the same "manual" — only icons/copy change.
 
-- **Panel wrapper**: `background:var(--surface-1)`, `border:0.5px solid var(--border)`,
-  `border-radius:12px`, `padding:1rem`. **No rotation, no thick borders** — those read
-  as sloppy rather than hand-made. A small step-number badge sits inline at the top of
-  the card's content (not absolutely positioned/overlapping the corner).
+- **Panel wrapper**: `background:var(--surface-1)`, `border:1.5px solid
+  var(--text-primary)` (bold, dark outline — deliberately heavier than a normal
+  0.5px hairline, reads as a booklet line-drawing), `border-radius:12px` (uniform,
+  no uneven/per-corner radius), `padding:1rem`. No rotation.
+- **Step badge**: a plain circle, no fill — `border:1.5px solid var(--text-primary)`,
+  transparent center, bold step number set in DynaPuff (see Typography below)
+  inside it. Not a colored icon badge — real IKEA manuals number steps plainly.
+- **The literal arrow**: a small inline SVG line-arrow (stroke only, no fill,
+  `stroke:#D9A05B`, `stroke-width:4`, rounded caps/joins) pointing from context
+  toward the field or element the user needs to act on. This replaces any
+  highlight-ring approach — draw an actual arrow graphic, matching real IKEA
+  manuals' visual language.
 - **Mockup elements inside a panel** (generic, stylized — never a real screenshot of
   the user's actual third-party site): a small "browser chrome" bar (three dots + a
-  fake URL pill), an input field outline, a button pill, a toggle, a key/lock/shield
-  icon (Tabler outline) — built from plain CSS/SVG shapes, not real UI captures.
-- **Warning/sensitive panel**: same card shape, `background:var(--bg-warning)`,
-  `border:0.5px solid var(--border-warning)` — no separate thick border treatment,
-  just the role-token fill + border so it still reads as "part of the set."
-- **Final panel**: a "done" state — checkmark, mascot in its happy/celebrating pose.
-- One consistent card skin per manual: either plain `--surface-1` cards, or the
-  wood-toned skin (below) — don't mix both styles in the same manual.
+  fake URL pill), an input field outline (`border:1.5px solid var(--text-primary)`,
+  transparent fill, matching the booklet line-art treatment), a button pill, a
+  toggle, a key/lock/shield icon (Tabler outline) — built from plain CSS/SVG shapes,
+  not real UI captures.
+- **Warning/sensitive panel**: the one exception to the monochrome rule — still
+  `background:var(--bg-warning)`, `border:0.5px solid var(--border-warning)` (the
+  normal hairline weight, not the bold 1.5px line-art border), since that color
+  needs to mean "danger" consistently, not fit the booklet aesthetic.
+- **Final panel**: a "done" state — checkmark, mascot in its happy/celebrating pose,
+  same bold-outline card treatment as any other step.
 
 ## The mascot
 
@@ -93,6 +105,8 @@ A small recurring cartoon character — round body, big simple eyes, holding a b
 appears in every panel to point at the relevant mockup element and crack a short,
 dry one-liner in a speech bubble. This carries the *fun* tone; it never carries
 safety-critical copy (that stays as a plain callout per the panel grammar above).
+Its existing amber fill (`#F4C177`) is what defines the panel grammar's "one accent
+color" — no separate mascot art needed for the IKEA-booklet card style.
 
 Running gag: the bagel gets progressively eaten across panels (whole → half →
 crumbs → gone) as the user moves through steps, finishing right as the last panel
@@ -132,32 +146,11 @@ used on the final panel). Bagel bite states, swap the `.bagel` group:
 Speech bubble: a simple rounded-rect `<div>` with a small triangle "tail" pointing at
 the mascot, short one-liner text, positioned near the mascot in each panel.
 
-### Real mascot art ("bagel guy")
+### Real mascot art
 
-The user has a reference character — a 3D-cartoon-style guy with a mustache, green
-shirt, holding a bagel — and will share more pose variations over time (fresh bagel,
-half-eaten, pointing left/right/down, celebrating, etc). When real image files exist:
-
-- Store them under `.claude/skills/human-steps-manual/assets/bagel-guy/`, one file per
-  pose (e.g. `default.png`, `point-left.png`, `celebrating.png`, `half-bagel.png`).
-  Ask the user to drop the file at that path (or share a reachable URL) — there's no
-  tool in this environment that pulls a pasted-in-chat image onto disk directly.
-- In the widget, embed the chosen pose as a `data:` URI (base64-encode the file
-  contents) rather than a bare local path — the widget iframe cannot resolve local
-  filesystem paths. Keep the source image reasonably small (compress/resize to roughly
-  200–300px tall) so the data URI doesn't bloat the widget payload.
-- If a pose file for the exact gesture you need doesn't exist yet, fall back to the
-  closest available pose rather than stretching/rotating the art in ways that would
-  look broken, and mention to the user which additional pose would help.
-- Once real art exists for a pose, prefer it over the hand-drawn inline SVG above for
-  that pose — the SVG stays only as the fallback for poses with no real art yet, or
-  for sessions where no image assets have been supplied.
-- Image generation: this environment has no direct Gemini/image-gen connector. The
-  Figma MCP server exposes Weave tools (`weave_list_tools`, `weave_run_tool`) which
-  *may* include an image-gen workflow, but using it requires the user to first link
-  their Figma account to Weave at `https://app.weavy.ai/settings?section=profile`
-  (an account/auth action — don't do this for them, ask them to do it) — after that,
-  check `weave_list_tools` for a suitable recipe before assuming one exists.
+Current design uses the hand-drawn SVG above — that's the common case, no extra
+reading needed. Only if the user has shared real pose image files for the mascot,
+read `reference/real-mascot-art.md` first for how to store/embed/compress them.
 
 ## Jargon terms — floating bubble, not inline expansion
 
@@ -232,45 +225,35 @@ to you.
 
 ## Keep token cost down
 
-Real mascot art and multi-panel layouts can quietly balloon a single tool call. Don't
-pay that cost more than once per widget:
+This skill's cost (vs. a plain text reply) is almost entirely the widget generation
+itself — keep it lean since the whole point is helping non-technical users without
+making every manual slow or expensive:
 
-- **Embed the mascot image's data URI exactly once**, in a single `<style>` rule
-  (e.g. `.mascot-img{background-image:url(data:...);background-size:contain}`), then
-  apply that class to every panel that needs the mascot. Never paste the same base64
-  string into multiple `<img src="data:...">` tags in one widget — that multiplies
-  the payload by panel count for zero visual gain.
-- **Keep the source image small before encoding**: resize to roughly 120–200px on
-  the long edge and compress (e.g. `sips -Z 160 -s formatOptions 55 in.png --out
-  out.jpg`) before base64-ing it. Check the encoded length and re-compress smaller if
-  it's not already a few KB.
-- **When generating the data URI, don't view it more than once.** Write it straight
-  into the file/variable you'll use to build the widget call in one Bash step —
-  don't `Read`/`cat` it to inspect it and then paste it again separately; each
-  viewing round-trips the full string through the model's context for no benefit.
-- For panels using the hand-drawn SVG fallback (no real art yet), keep the path data
-  as terse as the shape allows — it's cheap already, but repeated per panel it adds
-  up on long manuals (8+ steps).
+- Keep the mascot SVG's path data as terse as the shape allows — it repeats per
+  panel, so it adds up on long manuals (8+ steps).
 - Don't re-render the same widget multiple times while iterating/testing — sanity
   check the HTML logic first, render once.
+- If real mascot images are ever used instead of the SVG, see the token-cost
+  guidance in `reference/real-mascot-art.md` — embedding images can be far more
+  expensive than the hand-drawn SVG if not compressed first.
 
 ## Style notes
 
-- Warm, friendly palette — panels can optionally use a wood-toned card (e.g.
-  `background:#E8D9C3` light / `#3E2F23` dark via a `prefers-color-scheme: dark`
-  override, `border:1px solid #8B5E3C`) instead of plain `--surface-1`, for an
-  IKEA-manual-booklet feel. Keep the border thin (1px) and skip rotation, same as the
-  plain-card skin — the wood tone alone carries the "little illustrated booklet"
-  feeling; piling on thick borders and tilt reads as messy, not charming.
 - Keep panels compact enough that 3-5 fit on screen without heavy scrolling; wrap to
   multiple rows for longer sequences.
 - Background transparent, no outer page padding (per the visualize widget's own
   convention) so it composes cleanly in the side panel.
-- Font: default is `--font-sans` (the app's normal typeface) for all panel copy —
-  keep it. `--font-voice` (serif) is reserved for editorial/quote moments elsewhere
-  in the app, not this skill's UI-ish panels. `--font-mono` is fine for literal values
-  the user copies (a flag name, a command) so they read unambiguously as "type this
-  exactly." Don't introduce other fonts — only these three tokens are available.
+- **Typography — a deliberate, informed exception to the platform's font rule**:
+  step titles use **DynaPuff** (weight 600), body copy uses **Nunito** (400/600) —
+  both Google Fonts, SIL Open Font License, free for commercial use, no attribution
+  required. Load via `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@600&family=Nunito:wght@400;600&display=swap">`
+  (`fonts.googleapis.com`/`fonts.gstatic.com` are on the widget renderer's CDN
+  allowlist). This intentionally breaks the visualize widget's general "only the
+  three platform font tokens, so widgets blend into claude.ai" guidance — the
+  tradeoff was surfaced to and chosen by the user for this skill specifically, for a
+  more distinctly playful instruction-booklet feel. `--font-mono` is still used
+  for literal copyable values (tokens, flags, commands) so they read unambiguously
+  as "type this exactly."
 
 ## Aligning with the visualize widget's design system
 
@@ -280,8 +263,11 @@ precedence over anything here if they conflict. In particular:
   are fine (not shadows), but keep fills flat.
 - Colors: use CSS variables (`var(--surface-1)`, `var(--text-primary)`,
   `var(--bg-warning)`, `var(--border-warning)`, etc.) so panels work in dark mode,
-  not hardcoded hex — pick 1-2 accent ramps max (e.g. amber for warmth, red/amber
-  role tokens for the warning panel) rather than a rainbow per panel.
+  not hardcoded hex, with one deliberate exception — the accent arrow's amber
+  (`#D9A05B`/`#F4C177`, matching the mascot) is a fixed literal color, not a CSS
+  variable, since it's meant to be the one consistent accent regardless of
+  light/dark mode. The warning panel is the only other exception, using
+  `--bg-warning`/`--border-warning` instead of the monochrome+amber system.
 - Functional icons (lock, key, mail, check) should be Tabler outline webfont
   (`<i class="ti ti-lock">`), already loaded — don't hand-draw those. The **mascot**
   itself is the one deliberate exception: a small bespoke illustrative SVG character
