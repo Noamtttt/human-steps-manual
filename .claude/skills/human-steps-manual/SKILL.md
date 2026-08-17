@@ -146,32 +146,11 @@ used on the final panel). Bagel bite states, swap the `.bagel` group:
 Speech bubble: a simple rounded-rect `<div>` with a small triangle "tail" pointing at
 the mascot, short one-liner text, positioned near the mascot in each panel.
 
-### Real mascot art ("bagel guy")
+### Real mascot art
 
-The user has a reference character — a 3D-cartoon-style guy with a mustache, green
-shirt, holding a bagel — and will share more pose variations over time (fresh bagel,
-half-eaten, pointing left/right/down, celebrating, etc). When real image files exist:
-
-- Store them under `.claude/skills/human-steps-manual/assets/bagel-guy/`, one file per
-  pose (e.g. `default.png`, `point-left.png`, `celebrating.png`, `half-bagel.png`).
-  Ask the user to drop the file at that path (or share a reachable URL) — there's no
-  tool in this environment that pulls a pasted-in-chat image onto disk directly.
-- In the widget, embed the chosen pose as a `data:` URI (base64-encode the file
-  contents) rather than a bare local path — the widget iframe cannot resolve local
-  filesystem paths. Keep the source image reasonably small (compress/resize to roughly
-  200–300px tall) so the data URI doesn't bloat the widget payload.
-- If a pose file for the exact gesture you need doesn't exist yet, fall back to the
-  closest available pose rather than stretching/rotating the art in ways that would
-  look broken, and mention to the user which additional pose would help.
-- Once real art exists for a pose, prefer it over the hand-drawn inline SVG above for
-  that pose — the SVG stays only as the fallback for poses with no real art yet, or
-  for sessions where no image assets have been supplied.
-- Image generation: this environment has no direct Gemini/image-gen connector. The
-  Figma MCP server exposes Weave tools (`weave_list_tools`, `weave_run_tool`) which
-  *may* include an image-gen workflow, but using it requires the user to first link
-  their Figma account to Weave at `https://app.weavy.ai/settings?section=profile`
-  (an account/auth action — don't do this for them, ask them to do it) — after that,
-  check `weave_list_tools` for a suitable recipe before assuming one exists.
+Current design uses the hand-drawn SVG above — that's the common case, no extra
+reading needed. Only if the user has shared real pose image files for the mascot,
+read `reference/real-mascot-art.md` first for how to store/embed/compress them.
 
 ## Jargon terms — floating bubble, not inline expansion
 
@@ -246,27 +225,17 @@ to you.
 
 ## Keep token cost down
 
-Real mascot art and multi-panel layouts can quietly balloon a single tool call. Don't
-pay that cost more than once per widget:
+This skill's cost (vs. a plain text reply) is almost entirely the widget generation
+itself — keep it lean since the whole point is helping non-technical users without
+making every manual slow or expensive:
 
-- **Embed the mascot image's data URI exactly once**, in a single `<style>` rule
-  (e.g. `.mascot-img{background-image:url(data:...);background-size:contain}`), then
-  apply that class to every panel that needs the mascot. Never paste the same base64
-  string into multiple `<img src="data:...">` tags in one widget — that multiplies
-  the payload by panel count for zero visual gain.
-- **Keep the source image small before encoding**: resize to roughly 120–200px on
-  the long edge and compress (e.g. `sips -Z 160 -s formatOptions 55 in.png --out
-  out.jpg`) before base64-ing it. Check the encoded length and re-compress smaller if
-  it's not already a few KB.
-- **When generating the data URI, don't view it more than once.** Write it straight
-  into the file/variable you'll use to build the widget call in one Bash step —
-  don't `Read`/`cat` it to inspect it and then paste it again separately; each
-  viewing round-trips the full string through the model's context for no benefit.
-- For panels using the hand-drawn SVG fallback (no real art yet), keep the path data
-  as terse as the shape allows — it's cheap already, but repeated per panel it adds
-  up on long manuals (8+ steps).
+- Keep the mascot SVG's path data as terse as the shape allows — it repeats per
+  panel, so it adds up on long manuals (8+ steps).
 - Don't re-render the same widget multiple times while iterating/testing — sanity
   check the HTML logic first, render once.
+- If real mascot images are ever used instead of the SVG, see the token-cost
+  guidance in `reference/real-mascot-art.md` — embedding images can be far more
+  expensive than the hand-drawn SVG if not compressed first.
 
 ## Style notes
 
